@@ -17,10 +17,9 @@ provider:
 
 custom:
   pythonRequirements:
-    dockerizePip: false
+    dockerizePip: true
     slim: true
     strip: false
-    pythonBin: python3.12
 
 functions:
   crear-usuario:
