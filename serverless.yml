@@ -6,7 +6,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: python3.11
+  runtime: python3.12
   memorySize: 1024
   timeout: 30
   iam:
@@ -20,6 +20,7 @@ custom:
     dockerizePip: false
     slim: true
     strip: false
+    pythonBin: python3.12
 
 functions:
   crear-usuario:
