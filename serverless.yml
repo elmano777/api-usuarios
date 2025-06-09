@@ -1,6 +1,9 @@
 org: rolandodiaz
 service: api-usuarios
 
+plugins:
+  - serverless-python-requirements
+
 provider:
   name: aws
   runtime: python3.12
@@ -10,7 +13,13 @@ provider:
     role: arn:aws:iam::409362080365:role/LabRole
   environment:
     TABLE_NAME: ${sls:stage}-t_usuarios
-    JWT_SECRET: X21p38l7
+    JWT_SECRET: mi-super-secreto-jwt-2025
+
+custom:
+  pythonRequirements:
+    dockerizePip: false
+    slim: true
+    strip: false
 
 functions:
   crear-usuario:
@@ -21,7 +30,7 @@ functions:
           method: post
           cors: true
           integration: lambda
-
+  
   login:
     handler: usuarios.login_usuario
     events:
@@ -30,7 +39,7 @@ functions:
           method: post
           cors: true
           integration: lambda
-
+  
   validar-token:
     handler: usuarios.validar_token
     events:
