@@ -6,7 +6,7 @@ plugins:
 
 provider:
   name: aws
-  runtime: python3.12
+  runtime: python3.11
   memorySize: 1024
   timeout: 30
   iam:
