@@ -31,10 +31,10 @@ def hash_password(password):
 def crear_usuario(event, context):
     """Función para crear un nuevo usuario"""
     try:
-        # Parsear el body del request
-        body = json.loads(event['body'])
+        body = event['body']
+        if isinstance(body, str):
+            body = json.loads(body)
         
-        # Validar campos requeridos
         required_fields = ['tenant_id', 'nombre', 'email', 'password']
         for field in required_fields:
             if field not in body or not body[field]:
@@ -63,7 +63,6 @@ def crear_usuario(event, context):
         except Exception as e:
             print(f"Error verificando usuario existente: {str(e)}")
         
-        # Crear el nuevo usuario
         usuario_item = {
             'tenant_id': tenant_id,
             'email': email,
@@ -74,10 +73,8 @@ def crear_usuario(event, context):
             'activo': True
         }
         
-        # Guardar en DynamoDB
         table.put_item(Item=usuario_item)
         
-        # Respuesta exitosa (no incluir password)
         usuario_respuesta = {
             'tenant_id': tenant_id,
             'email': email,
@@ -101,10 +98,10 @@ def crear_usuario(event, context):
 def login_usuario(event, context):
     """Función para login de usuario y generación de token"""
     try:
-        # Parsear el body del request
-        body = json.loads(event['body'])
+        body = event['body']
+        if isinstance(body, str):
+            body = json.loads(body)
         
-        # Validar campos requeridos
         required_fields = ['tenant_id', 'email', 'password']
         for field in required_fields:
             if field not in body or not body[field]:
@@ -116,7 +113,6 @@ def login_usuario(event, context):
         email = body['email']
         password = body['password']
         
-        # Buscar usuario en DynamoDB
         try:
             response = table.get_item(
                 Key={
@@ -132,13 +128,11 @@ def login_usuario(event, context):
             
             usuario = response['Item']
             
-            # Verificar contraseña
             if usuario['password'] != hash_password(password):
                 return lambda_response(401, {
                     'error': 'Credenciales inválidas'
                 })
             
-            # Verificar si el usuario está activo
             if not usuario.get('activo', True):
                 return lambda_response(401, {
                     'error': 'Usuario inactivo'
@@ -148,7 +142,6 @@ def login_usuario(event, context):
             print(f"Error buscando usuario: {str(e)}")
             return lambda_response(500, {'error': 'Error interno del servidor'})
         
-        # Generar token JWT (válido por 1 hora)
         payload = {
             'tenant_id': tenant_id,
             'email': email,
@@ -179,29 +172,27 @@ def login_usuario(event, context):
 def validar_token(event, context):
     """Función para validar token JWT"""
     try:
-        # Obtener token del header Authorization o del body
         token = None
         
-        # Intentar obtener del header Authorization
         if 'headers' in event and event['headers']:
             auth_header = event['headers'].get('Authorization') or event['headers'].get('authorization')
             if auth_header and auth_header.startswith('Bearer '):
                 token = auth_header.split(' ')[1]
         
-        # Si no está en el header, intentar obtener del body
         if not token and event.get('body'):
-            try:
-                body = json.loads(event['body'])
-                token = body.get('token')
-            except json.JSONDecodeError:
-                pass
+            body = event['body']
+            if isinstance(body, str):
+                try:
+                    body = json.loads(body)
+                except json.JSONDecodeError:
+                    body = {}
+            token = body.get('token')
         
         if not token:
             return lambda_response(400, {
                 'error': 'Token requerido'
             })
         
-        # Validar token
         try:
             payload = jwt.decode(token, jwt_secret, algorithms=['HS256'])
             
