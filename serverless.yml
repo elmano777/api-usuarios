@@ -1,0 +1,59 @@
+org: rolandodiaz
+service: api-usuarios
+
+provider:
+  name: aws
+  runtime: python3.12
+  memorySize: 1024
+  timeout: 30
+  iam:
+    role: arn:aws:iam::409362080365:role/LabRole
+  environment:
+    TABLE_NAME: ${sls:stage}-t_usuarios
+    JWT_SECRET: X21p38l7
+
+functions:
+  crear-usuario:
+    handler: usuarios.crear_usuario
+    events:
+      - http:
+          path: /usuarios/crear
+          method: post
+          cors: true
+          integration: lambda
+
+  login:
+    handler: usuarios.login_usuario
+    events:
+      - http:
+          path: /usuarios/login
+          method: post
+          cors: true
+          integration: lambda
+
+  validar-token:
+    handler: usuarios.validar_token
+    events:
+      - http:
+          path: /usuarios/validar
+          method: post
+          cors: true
+          integration: lambda
+
+resources:
+  Resources:
+    TablaUsuarios:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:provider.environment.TABLE_NAME}
+        AttributeDefinitions:
+          - AttributeName: tenant_id
+            AttributeType: S
+          - AttributeName: email
+            AttributeType: S
+        KeySchema:
+          - AttributeName: tenant_id
+            KeyType: HASH
+          - AttributeName: email
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
