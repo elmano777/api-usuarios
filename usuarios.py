@@ -1,7 +1,7 @@
 import json
 import boto3
 import hashlib
-import pyjwt
+import jwt
 import os
 from datetime import datetime, timedelta, timezone
 
@@ -150,7 +150,7 @@ def login_usuario(event, context):
             'iat': datetime.now(timezone.utc)
         }
         
-        token = pyjwt.encode(payload, jwt_secret, algorithm='HS256')
+        token = jwt.encode(payload, jwt_secret, algorithm='HS256')
         
         return lambda_response(200, {
             'message': 'Login exitoso',
@@ -194,7 +194,7 @@ def validar_token(event, context):
             })
         
         try:
-            payload = pyjwt.decode(token, jwt_secret, algorithms=['HS256'])
+            payload = jwt.decode(token, jwt_secret, algorithms=['HS256'])
             
             return lambda_response(200, {
                 'valid': True,
@@ -206,12 +206,12 @@ def validar_token(event, context):
                 'expires_at': payload['exp']
             })
             
-        except pyjwt.ExpiredSignatureError:
+        except jwt.ExpiredSignatureError:
             return lambda_response(401, {
                 'valid': False,
                 'error': 'Token expirado'
             })
-        except pyjwt.InvalidTokenError:
+        except jwt.InvalidTokenError:
             return lambda_response(401, {
                 'valid': False,
                 'error': 'Token inválido'
